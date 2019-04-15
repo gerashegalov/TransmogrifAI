@@ -27,6 +27,7 @@ import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.storage.StorageLevel
 
 import scala.concurrent.ExecutionContext
 
@@ -55,7 +56,7 @@ private[op] class OpTrainValidationSplit[M <: Model[_], E <: Estimator[_]]
     stratifyCondition: Boolean = isClassification && stratify
   )(implicit spark: SparkSession): BestEstimator[E] = {
 
-    dataset.persist()
+    dataset.persist(StorageLevel.MEMORY_ONLY_SER)
     val schema = dataset.schema
 
     val (training, validation) = createTrainValidationSplits(

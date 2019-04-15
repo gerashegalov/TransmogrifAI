@@ -44,6 +44,7 @@ import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.monotonically_increasing_id
 import org.apache.spark.sql.{Dataset, Row, SparkSession, functions}
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.util.SparkThreadUtils
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -216,7 +217,9 @@ private[op] trait OpValidator[M <: Model[_], E <: Estimator[_]] extends Serializ
         val Array(negativeCount, positiveCount) = datasetsByClass.map(_.count())
         d.estimate(positiveCount = positiveCount, negativeCount = negativeCount, seed = d.getSeed)
       case c: DataCutter =>
-        val labelCounts = dataset.sparkSession.createDataFrame(classes zip datasetsByClass.map(_.count())).persist()
+        val labelCounts = dataset.sparkSession
+          .createDataFrame(classes zip datasetsByClass.map(_.count()))
+          .persist(StorageLevel.MEMORY_ONLY_SER)
         c.estimate(labelCounts)
         labelCounts.unpersist
       case _ =>
@@ -270,8 +273,8 @@ private[op] trait OpValidator[M <: Model[_], E <: Estimator[_]] extends Serializ
   protected def getSummary[T](
     modelInfo: Seq[(E, Array[ParamMap])], label: String, features: String, train: Dataset[T], test: Dataset[T]
   )(implicit ec: ExecutionContext): Array[ValidatedModel[E]] = {
-    train.persist()
-    test.persist()
+    train.persist(StorageLevel.MEMORY_ONLY_SER)
+    test.persist(StorageLevel.MEMORY_ONLY_SER)
     val summaryFuts = modelInfo.map { case (estimator, params) =>
       val name = estimator.getClass.getSimpleName
       estimator match {

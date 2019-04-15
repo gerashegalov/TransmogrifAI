@@ -39,6 +39,7 @@ import com.salesforce.op.utils.spark.RichDataset._
 import com.salesforce.op.utils.spark.RichVector._
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.types.Metadata
+import org.apache.spark.storage.StorageLevel
 
 import scala.reflect.runtime.universe.TypeTag
 
@@ -76,7 +77,7 @@ class DecisionTreeNumericMapBucketizer[N, I2 <: OPMap[N]]
     // drop the empty map values & clean map keys if needed
     val ds = dataset.filter(_._2.nonEmpty).map { case (label, map) =>
       label -> filterKeys[N](map, shouldCleanKey = shouldCleanKeys, shouldCleanValue = shouldCleanValues)
-    }.persist()
+    }.persist(StorageLevel.MEMORY_ONLY_SER)
 
     val computedSplits: Array[(String, Splits)] = if (ds.isEmpty) {
       log.info("Skip bucketizing empty numeric map '{}' feature", in2.name)

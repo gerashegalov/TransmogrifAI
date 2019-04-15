@@ -42,6 +42,7 @@ import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.storage.StorageLevel
 import org.json4s.JValue
 import org.json4s.JsonAST.{JField, JObject}
 import org.json4s.jackson.JsonMethods.{pretty, render}
@@ -93,7 +94,8 @@ class OpWorkflowModel(val uid: String = UID[OpWorkflowModel], val trainingParams
   protected def generateRawData()(implicit spark: SparkSession): DataFrame = {
     require(reader.nonEmpty, "Data reader must be set")
     checkReadersAndFeatures()
-    reader.get.generateDataFrame(rawFeatures, parameters).persist() // don't want to redo this
+    reader.get.generateDataFrame(rawFeatures, parameters)
+      .persist(StorageLevel.MEMORY_ONLY_SER) // don't want to redo this
   }
 
   /**
@@ -412,7 +414,7 @@ class OpWorkflowModel(val uid: String = UID[OpWorkflowModel], val trainingParams
     }
 
     // Persist the scores if needed
-    if (persistScores) scores.persist()
+    if (persistScores) scores.persist(StorageLevel.MEMORY_ONLY_SER)
 
     // Save the scores if a path was provided
     path.foreach(scores.saveAvro(_))

@@ -32,12 +32,13 @@ package com.salesforce.op.utils.stages
 
 import com.salesforce.op.features.OPFeature
 import com.salesforce.op.stages.impl.selector.ModelSelectorNames.{EstimatorType, ModelType}
-import com.salesforce.op.stages.impl.selector.{HasTestEval, ModelSelector, ModelSelectorNames}
+import com.salesforce.op.stages.impl.selector.{HasTestEval, ModelSelector}
 import com.salesforce.op.stages.{OPStage, OpTransformer}
 import com.salesforce.op.{OpWorkflow, OpWorkflowModel}
-import org.apache.spark.ml.{Estimator, Model, Transformer}
+import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -114,7 +115,7 @@ private[op] case object FitStagesUtil {
           Row.fromSeq(values)
         }
 
-      spark.createDataFrame(transformed, newSchema).persist()
+      spark.createDataFrame(transformed, newSchema).persist(StorageLevel.MEMORY_ONLY_SER)
     }
   }
 

@@ -35,6 +35,7 @@ import com.salesforce.op.stages.impl.selector.ModelSelectorNames
 import org.apache.spark.ml.param._
 import org.apache.spark.sql.types.{Metadata, MetadataBuilder}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 case object DataBalancer {
@@ -175,7 +176,7 @@ class DataBalancer(uid: String = UID[DataBalancer]) extends Splitter(uid = uid) 
       }
     }
 
-    balanced.persist()
+    balanced.persist(StorageLevel.MEMORY_ONLY_SER)
   }
 
   private def splitNegativePositive(data: Dataset[Row]): Seq[DataFrame] = {

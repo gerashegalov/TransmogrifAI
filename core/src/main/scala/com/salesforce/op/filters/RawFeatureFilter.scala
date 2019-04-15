@@ -46,6 +46,7 @@ import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.util.ClosureUtils
 import org.slf4j.LoggerFactory
 
@@ -482,7 +483,7 @@ class RawFeatureFilter[T]
   def generateFilteredRaw(rawFeatures: Array[OPFeature], parameters: OpParams)
     (implicit spark: SparkSession): FilteredRawData = {
 
-    val trainData = trainingReader.generateDataFrame(rawFeatures, parameters).persist()
+    val trainData = trainingReader.generateDataFrame(rawFeatures, parameters).persist(StorageLevel.MEMORY_ONLY_SER)
     log.info("Loaded training data")
     require(trainData.count() > 0, "RawFeatureFilter cannot work with empty training data")
     val trainingSummary = computeFeatureStats(trainData, rawFeatures, FeatureDistributionType.Training)
@@ -493,7 +494,7 @@ class RawFeatureFilter[T]
     }
 
     val scoreData = scoringReader.flatMap { s =>
-      val sd = s.generateDataFrame(rawFeatures, parameters.switchReaderParams()).persist()
+      val sd = s.generateDataFrame(rawFeatures, parameters.switchReaderParams()).persist(StorageLevel.MEMORY_ONLY_SER)
       log.info("Loaded scoring data")
       val scoringDataCount = sd.count()
       if (scoringDataCount >= minScoringRows) Some(sd)
@@ -533,7 +534,7 @@ class RawFeatureFilter[T]
     }
 
     val schema = StructType(featuresToKeepNames.map(featuresDropped.schema(_)))
-    val cleanedData = spark.createDataFrame(mapsCleaned, schema).persist()
+    val cleanedData = spark.createDataFrame(mapsCleaned, schema).persist(StorageLevel.MEMORY_ONLY_SER)
     trainData.unpersist()
     scoreData.map(_.unpersist())
 

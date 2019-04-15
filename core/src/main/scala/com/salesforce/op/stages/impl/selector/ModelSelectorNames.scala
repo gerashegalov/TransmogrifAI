@@ -37,6 +37,7 @@ import com.salesforce.op.stages.base.binary.OpTransformer2
 import com.salesforce.op.utils.spark.RichMetadata._
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.sql.{DataFrame, Dataset}
+import org.apache.spark.storage.StorageLevel
 
 case object ModelSelectorNames {
   val TrainValSplitResults = "trainValidationSplitResults"
@@ -86,7 +87,7 @@ private[op] trait HasEval {
   protected def evaluate(
     data: Dataset[_]
   ): EvaluationMetrics = {
-    data.persist()
+    data.persist(StorageLevel.MEMORY_ONLY_SER)
     val metricsMap = evaluators.map { evaluator =>
       evaluator.setLabelCol(labelColName)
       fullPredictionColName.foreach(evaluator.setPredictionCol)

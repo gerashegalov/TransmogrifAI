@@ -44,6 +44,7 @@ import com.salesforce.op.utils.stages.FitStagesUtil.{CutDAG, FittedDAG, Layer, S
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.mutable.{MutableList => MList}
 import scala.util.{Failure, Success, Try}
@@ -225,7 +226,7 @@ class OpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore {
         "Data reader must be set either directly on the workflow or through the RawFeatureFilter")
       case (Some(r), None) =>
         checkReadersAndFeatures()
-        r.generateDataFrame(rawFeatures, parameters).persist()
+        r.generateDataFrame(rawFeatures, parameters).persist(StorageLevel.MEMORY_ONLY_SER)
       case (rd, Some(rf)) =>
         rd match {
           case None => setReader(rf.trainingReader)

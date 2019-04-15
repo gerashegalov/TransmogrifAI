@@ -37,6 +37,7 @@ import org.apache.spark.ml.param._
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{Metadata, MetadataBuilder}
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import scala.util.Try
@@ -92,7 +93,7 @@ class DataCutter(uid: String = UID[DataCutter]) extends Splitter(uid = uid) with
     val labelColIdx = data.columns.indexOf(labelColName)
 
     if (!isSet(labelsToKeep)) {
-      val labelCounts = data.groupBy(labelColName).count().persist()
+      val labelCounts = data.groupBy(labelColName).count().persist(StorageLevel.MEMORY_ONLY_SER)
       val res = estimate(labelCounts)
       labelCounts.unpersist()
       setLabels(res.labelsKept.distinct, res.labelsDropped.distinct, res.labelsDroppedTotal)

@@ -32,6 +32,7 @@ import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.util.SparkThreadUtils
 
 import scala.concurrent.duration.Duration
@@ -78,7 +79,7 @@ private[op] class OpCrossValidation[M <: Model[_], E <: Estimator[_]]
     stratifyCondition: Boolean = isClassification && stratify
   )(implicit spark: SparkSession): BestEstimator[E] = {
 
-    dataset.persist()
+    dataset.persist(StorageLevel.MEMORY_ONLY_SER)
     val schema = dataset.schema
 
     // creating k train/validation data
